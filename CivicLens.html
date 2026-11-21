@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>CivicLens</title>
+<style>
+:root{--bg:#F4F1EA;--card:#fff;--ink:#14213D;--mute:#5B6478;--acc:#2A9D8F;--amb:#F2A541;--line:#E2DDD2;--hd:#14213D;--hdt:#F4F1EA;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){color-scheme:dark;--bg:#0F1830;--card:#1A2646;--ink:#F1EEE6;--mute:#A9B2C7;--line:#2C3A62;--hd:#0A1226}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#0F1830;--card:#1A2646;--ink:#F1EEE6;--mute:#A9B2C7;--line:#2C3A62;--hd:#0A1226}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font:17px/1.5 Inter,system-ui,sans-serif}
+header{background:var(--hd);color:var(--hdt);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header b{font:700 24px 'Space Grotesk',system-ui,sans-serif}header b i{color:var(--amb);font-style:normal}header small{opacity:.8;flex:1;min-width:180px}
+select,input,textarea,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:46px}
+header select{color:#14213D;background:#F4F1EA}
+nav{display:flex;gap:8px;padding:12px 16px;max-width:900px;margin:auto}nav button{flex:1;font-weight:600}nav button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+main{max-width:900px;margin:auto;padding:0 16px 40px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+textarea{width:100%;min-height:130px;resize:vertical}input,select{width:100%}.g{display:grid;gap:10px;grid-template-columns:1fr 1fr}@media(max-width:560px){.g{grid-template-columns:1fr}}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{width:auto}
+.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700;padding:11px 22px}.mic{font-size:20px}.mic.on{background:#B3261E;color:#fff}
+.chip{display:inline-block;padding:3px 14px;border-radius:99px;font-weight:700;font-size:15px;color:#14213D}.s0{background:#CFE8E4}.s1{background:#F8E3B5}.s2{background:#F2A541}.s3{background:#B3261E;color:#fff}
+.id{font:700 34px 'Space Grotesk',system-ui,sans-serif;color:var(--acc);letter-spacing:1px}.mute{color:var(--mute);font-size:15px}h2{font:700 24px 'Space Grotesk',system-ui,sans-serif;margin:6px 0 12px}
+.st{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}.st div{text-align:center;padding:10px;border-radius:12px;font-weight:700}.st b{display:block;font-size:26px}
+.t{border-left:8px solid var(--amb)}.t.c3{border-color:#B3261E}.t.c0{border-color:#CFE8E4}.t.c1{border-color:#F8E3B5}img.ph{max-width:160px;border-radius:8px;display:block;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#14213D;color:#fff;padding:12px 20px;border-radius:12px;display:none;z-index:9;max-width:90%}
+nav{flex-wrap:wrap}nav button{min-width:104px;padding:8px}.hero{border-left:8px solid var(--acc)}
+</style></head><body>
+<header><b>Civic<i>Lens</i></b><small id="tag"></small><select id="lg" aria-label="Language" onchange="lang=this.value;document.documentElement.lang=lang;render()"><option value="en">English</option><option value="hi">हिन्दी</option><option value="te">తెలుగు</option><option value="ta">தமிழ்</option></select></header>
+<nav id="nav"></nav><main id="app"></main><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KEYS="tag report track auth describe name loc photo submit listen id cat sev why dept another enterId find nf status login pw logout setpw save Low Medium High Critical New Progress Resolved nomic wrong none empty to suffix routedHint setnow notset admin similar all saved short pwhint".split(" ");
+const T={
+en:["Report a problem. We send it to the right team.","Report","Track","Authority","Describe the problem (type or tap the mic)","Your name (optional)","Location / landmark (optional)","Photo (optional)","Submit complaint","Listen","Complaint ID","Category","Priority","Reason","Routed to","Report another","Enter complaint ID","Check status","No complaint found with that ID.","Status","Authority login","Password","Log out","Set password","Save","Low","Medium","High","Critical","New","In progress","Resolved","Voice input is not available here. Please type.","Wrong password.","No complaints yet.","Please describe the problem first.","Routed to","Dept","","Set a password","Not set yet. Ask the admin.","Admin (all departments)","similar","All","Password saved.","Use at least 6 characters.","First time? Admin password is admin123. Change it right away."],
+hi:["समस्या दर्ज करें। हम इसे सही विभाग तक पहुँचाएँगे।","शिकायत","ट्रैक","अधिकारी","समस्या बताएँ (लिखें या माइक दबाएँ)","आपका नाम (वैकल्पिक)","स्थान / पहचान (वैकल्पिक)","फ़ोटो (वैकल्पिक)","शिकायत भेजें","सुनें","शिकायत संख्या","श्रेणी","प्राथमिकता","कारण","भेजा गया","दूसरी शिकायत","शिकायत संख्या डालें","स्थिति देखें","इस संख्या की कोई शिकायत नहीं मिली।","स्थिति","अधिकारी लॉगिन","पासवर्ड","लॉग आउट","पासवर्ड सेट करें","सहेजें","कम","मध्यम","उच्च","गंभीर","नई","प्रगति में","हल हुई","यहाँ आवाज़ इनपुट उपलब्ध नहीं है। कृपया लिखें।","गलत पासवर्ड।","अभी कोई शिकायत नहीं।","पहले समस्या बताएँ।","भेजा गया","विभाग","","पासवर्ड सेट करें","अभी सेट नहीं है। एडमिन से कहें।","एडमिन (सभी विभाग)","मिलती-जुलती","सभी","पासवर्ड सहेजा गया।","कम से कम 6 अक्षर रखें।","पहली बार? एडमिन पासवर्ड admin123 है। तुरंत बदलें।"],
+te:["సమస్యను నమోదు చేయండి. మేము సరైన విభాగానికి పంపుతాము.","ఫిర్యాదు","ట్రాక్","అధికారి","సమస్యను వివరించండి (టైప్ చేయండి లేదా మైక్ నొక్కండి)","మీ పేరు (ఐచ్ఛికం)","ప్రదేశం / గుర్తు (ఐచ్ఛికం)","ఫోటో (ఐచ్ఛికం)","ఫిర్యాదు పంపండి","వినండి","ఫిర్యాదు ID","వర్గం","ప్రాధాన్యత","కారణం","పంపబడింది","మరొకటి నమోదు","ఫిర్యాదు ID ఇవ్వండి","స్థితి చూడండి","ఈ IDతో ఫిర్యాదు లేదు.","స్థితి","అధికారి లాగిన్","పాస్‌వర్డ్","లాగ్ అవుట్","పాస్‌వర్డ్ సెట్ చేయండి","సేవ్","తక్కువ","మధ్యస్థం","ఎక్కువ","అత్యవసరం","కొత్త","పురోగతిలో","పరిష్కరించబడింది","ఇక్కడ వాయిస్ ఇన్‌పుట్ అందుబాటులో లేదు. దయచేసి టైప్ చేయండి.","తప్పు పాస్‌వర్డ్.","ఇంకా ఫిర్యాదులు లేవు.","ముందు సమస్యను వివరించండి.","పంపబడింది","విభాగం","","పాస్‌వర్డ్ సెట్ చేయండి","ఇంకా సెట్ కాలేదు. అడ్మిన్‌ను అడగండి.","అడ్మిన్ (అన్ని విభాగాలు)","సమానమైనవి","అన్నీ","పాస్‌వర్డ్ సేవ్ అయింది.","కనీసం 6 అక్షరాలు ఉండాలి.","మొదటిసారా? అడ్మిన్ పాస్‌వర్డ్ admin123. వెంటనే మార్చండి."],
+ta:["பிரச்சனையைப் பதிவு செய்யுங்கள். சரியான துறைக்கு அனுப்புவோம்.","புகார்","கண்காணி","அதிகாரி","பிரச்சனையை விவரிக்கவும் (எழுதவும் அல்லது மைக்கை அழுத்தவும்)","உங்கள் பெயர் (விருப்பம்)","இடம் / அடையாளம் (விருப்பம்)","புகைப்படம் (விருப்பம்)","புகாரை அனுப்பு","கேளுங்கள்","புகார் எண்","வகை","முன்னுரிமை","காரணம்","அனுப்பப்பட்டது","மற்றொரு புகார்","புகார் எண்ணை உள்ளிடவும்","நிலை பார்","இந்த எண்ணில் புகார் இல்லை.","நிலை","அதிகாரி உள்நுழைவு","கடவுச்சொல்","வெளியேறு","கடவுச்சொல் அமை","சேமி","குறைவு","நடுத்தரம்","அதிகம்","அவசரம்","புதியது","நடைபெறுகிறது","தீர்க்கப்பட்டது","இங்கே குரல் உள்ளீடு இல்லை. தயவுசெய்து எழுதவும்.","தவறான கடவுச்சொல்.","இன்னும் புகார்கள் இல்லை.","முதலில் பிரச்சனையை விவரிக்கவும்.","அனுப்பப்பட்டது","துறை","","கடவுச்சொல் அமைக்கவும்","இன்னும் அமைக்கப்படவில்லை. நிர்வாகியிடம் கேளுங்கள்.","நிர்வாகி (அனைத்து துறைகள்)","ஒத்தவை","அனைத்தும்","கடவுச்சொல் சேமிக்கப்பட்டது.","குறைந்தது 6 எழுத்துகள் வேண்டும்.","முதல் முறையா? நிர்வாகி கடவுச்சொல் admin123. உடனே மாற்றவும்."]};
+const K={};for(const l in T){K[l]={};KEYS.forEach((k,i)=>K[l][k]=T[l][i])}
+const N={en:["Roads","Waste","Water","Electricity","Trees & Parks","Drainage"],hi:["सड़क","कचरा","जल","बिजली","पेड़-पार्क","नाली"],te:["రోడ్లు","చెత్త","నీరు","విద్యుత్","చెట్లు-పార్కులు","డ్రైనేజీ"],ta:["சாலை","குப்பை","குடிநீர்","மின்சாரம்","மரம்-பூங்கா","வடிகால்"]};
+const SUF={en:" Dept",hi:" विभाग",te:" విభాగం",ta:" துறை"},LC={en:"en-IN",hi:"hi-IN",te:"te-IN",ta:"ta-IN"};
+const X={en:{home:"Home",dash:"My Dashboard",comm:"Community",email:"Email",signup:"Create authority account",dsel:"Department",code:"Department access code",created:"Account created. You can log in now.",exists:"This email already has an account.",badcode:"Wrong department access code.",bademail:"Enter a valid email.",mine:"My complaints (this device)",mn:"You haven’t reported anything on this device yet.",me2:"Me too",ahint:"Authority only. Choose your department and set a password to sign up. Admin login: admin@civiclens.app / admin123 (change it right away).",hh:"Your voice fixes your city",hs:"Report potholes, garbage, water leaks, broken lights and more. Speak or type in your language. No email needed for citizens.",s1:"Describe or speak",s2:"Smart analysis and priority",s3:"Sent to the right department",s4:"Track until resolved",tot:"Complaints",res:"Resolved",cn:"Community reports",ch:"Public reports from the community. Tap “Me too” if you face the same problem.",cpw:"Change my password",newacc:"New authority? Create account",haveacc:"Have an account? Log in",mypw:"New password"},hi:{home:"होम",dash:"मेरा डैशबोर्ड",comm:"समुदाय"},te:{home:"హోమ్",dash:"నా డాష్‌బోర్డ్",comm:"సమాజం"},ta:{home:"முகப்பு",dash:"என் டாஷ்போர்டு",comm:"சமூகம்"}};
+for(const l in K)K[l]={...X.en,...K.en,...K[l],...(X[l]||{})};
+const CK=["roads","waste","water","power","trees","drain"];
+const CW=[["pothole","road","footpath","bridge","speed breaker","गड्ढ","सड़क","రోడ్","గుంత","சாலை","குழி"],["garbage","waste","trash","dump","litter","कचरा","गंदगी","చెత్త","குப்பை"],["water","leak","pipe","tap","पानी","पाइप","నీరు","నీటి","குழாய்","தண்ணீர்"],["electric","wire","power","streetlight","street light","transformer","pole","बिजली","तार","కరెంట్","విద్యుత్","వైర్","மின்","கம்பி"],["tree","branch","park","पेड़","చెట్టు","மரம்"],["drain","sewage","sewer","overflow","flood","manhole","नाली","सीवर","కాలువ","డ్రైనేజీ","வடிகால்","சாக்கடை"]];
+const CRIT=["live wire","exposed wire","shock","fire","gas leak","collapse","accident","injur","open manhole","spark","flood","खुला तार","करंट","आग","షాక్","నిప్పు","ప్రమాదం","தீ","விபத்து"],SENS=["school","hospital","child","college","स्कूल","अस्पताल","बच्चे","బడి","పాఠశాల","ఆసుపత్రి","பள்ளி","மருத்துவமனை"],HIGH=["burst","no water","days","blocked","fallen","fell","sewage","overflow","deep","dark","दिन","फट","రోజులు","நாட்கள்"],LOW=["minor","small","faded","paint"];
+let lang="en",tab="home",UE=null,mode="in",U=null,R=null,F="all",D={text:"",name:"",loc:""},rec=null,S;
+const dflt=()=>({tickets:[],pw:{}});
+try{S=JSON.parse(localStorage.getItem("cl")||"null")||dflt()}catch(e){S=dflt()}
+S.pw=S.pw||{};S.acc=S.acc||{};S.mine=S.mine||[];S.voted=S.voted||[];
+const save=()=>{try{localStorage.setItem("cl",JSON.stringify(S))}catch(e){}};
+async function H(s){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("cl:"+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){return"p"+btoa(unescape(encodeURIComponent(s)))}}
+(async()=>{if(!S.acc["admin@civiclens.app"]){S.acc["admin@civiclens.app"]={d:"admin",h:await H("admin123")};save()}})();
+const toast=m=>{const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t.h);t.h=setTimeout(()=>t.style.display="none",3200)};
+const hit=(t,a)=>a.filter(w=>t.includes(w));
+function analyze(txt){const t=txt.toLowerCase();let best=0,bs=-1;CW.forEach((a,i)=>{const n=hit(t,a).length;if(n>bs){bs=n;best=i}});
+const c=hit(t,CRIT),s=hit(t,SENS),h=hit(t,HIGH),l=hit(t,LOW);let sc=l.length&&!c.length&&!h.length?0:1;if(c.length)sc+=2;if(h.length)sc+=1;if(s.length)sc+=1;
+return{cat:best,sev:Math.min(3,sc),why:[...c,...s,...h,...(bs>0?CW[best].filter(w=>t.includes(w)).slice(0,2):[])].slice(0,4).join(", ")||"—"}}
+const shrink=f=>new Promise(r=>{if(!f)return r("");const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,360/i.width),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.6))};i.onerror=()=>r("");i.src=u});
+function mic(){const k=K[lang],SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return toast(k.nomic);
+if(rec){rec.stop();return}const base=$("#tx").value?$("#tx").value+" ":"";try{rec=new SR;rec.lang=LC[lang];rec.interimResults=true;
+rec.onresult=e=>{$("#tx").value=base+[...e.results].map(r=>r[0].transcript).join(" ");D.text=$("#tx").value};
+rec.onend=()=>{rec=null;$("#mic")&&$("#mic").classList.remove("on")};rec.onerror=()=>{toast(k.nomic)};rec.start();$("#mic").classList.add("on")}catch(e){rec=null;toast(k.nomic)}}
+function say(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=LC[lang];speechSynthesis.speak(u)}catch(e){}}
+async function submit(){const k=K[lang];D.text=$("#tx").value.trim();if(!D.text)return toast(k.empty);
+const a=analyze(D.text),ph=await shrink($("#ph").files[0]);
+const t={id:"CL-"+Math.random().toString(36).slice(2,7).toUpperCase(),text:D.text,name:D.name,loc:D.loc,cat:a.cat,sev:a.sev,why:a.why,st:0,at:Date.now(),ph};
+S.tickets.push(t);S.mine.push(t.id);save();R=t;D={text:"",name:"",loc:""};render();
+say(`${k.id} ${t.id.split("").join(" ")}. ${k.sev}: ${k["Low Medium High Critical".split(" ")[t.sev]]}. ${k.to}: ${N[lang][t.cat]}${SUF[lang]}`)}
+const sevL=(k,i)=>k["Low Medium High Critical".split(" ")[i]],stL=(k,i)=>k[["New","Progress","Resolved"][i]];
+const chip=(k,s)=>`<span class="chip s${s}">${sevL(k,s)}</span>`;
+function card(t,k,full){const sim=S.tickets.filter(x=>x.id!==t.id&&x.cat===t.cat&&t.loc&&x.loc.toLowerCase()===t.loc.toLowerCase()).length;
+return`<div class="card t c${t.sev}"><div class="row"><span class="id" style="font-size:24px">${t.id}</span>${chip(k,t.sev)}<span class="mute">${new Date(t.at).toLocaleString()}</span></div>
+<p>${esc(t.text)}</p><div class="mute">${k.cat}: <b>${N[lang][t.cat]}</b> · ${k.to}: <b>${N[lang][t.cat]}${SUF[lang]}</b><br>${k.why}: ${esc(t.why)}${t.loc?`<br>📍 ${esc(t.loc)}`:""}${t.name?`<br>👤 ${esc(t.name)}`:""}${sim?`<br>⚠ ${sim} ${k.similar}`:""}</div>${t.ph?`<img class="ph" src="${t.ph}" alt="">`:""}
+${full?`<div class="row" style="margin-top:10px"><label>${k.status}</label><select onchange="setSt('${t.id}',+this.value)">${[0,1,2].map(i=>`<option value="${i}"${t.st===i?" selected":""}>${stL(k,i)}</option>`).join("")}</select></div>`:`<p><b>${k.status}: ${stL(k,t.st)}</b></p>`}</div>`}
+function setSt(id,v){const t=S.tickets.find(x=>x.id===id);if(t){t.st=v;save()}}
+async function login(){const k=K[lang],e=$("#em").value.trim().toLowerCase(),a=S.acc[e];if(a&&a.h===await H($("#pw").value)){U=a.d;UE=e;render()}else toast(k.wrong)}
+async function signup(){const k=K[lang],e=$("#em").value.trim().toLowerCase(),d=$("#dp").value,p=$("#pw").value;
+if(!/^\S+@\S+\.\S+$/.test(e))return toast(k.bademail);if(S.acc[e])return toast(k.exists);if(p.length<6)return toast(k.short);
+
+S.acc[e]={d,h:await H(p)};save();mode="in";render();toast(k.created)}
+async function chPw(){const v=$("#np_me").value;if(v.length<6)return toast(K[lang].short);S.acc[UE].h=await H(v);save();$("#np_me").value="";toast(K[lang].saved)}
+function delAcc(i){const e=Object.keys(S.acc)[i];if(e&&S.acc[e].d!=="admin"){delete S.acc[e];save();render()}}
+function home(k){const n=S.tickets.length,r=S.tickets.filter(t=>t.st===2).length;
+return`<div class="card hero"><h2 style="font-size:32px">${k.hh}</h2><p>${k.hs}</p><p><button class="pri" onclick="tab='report';render()">${k.report}</button></p></div>
+<div class="g">${[k.s1,k.s2,k.s3,k.s4].map((x,i)=>`<div class="card"><span class="id" style="font-size:26px">${i+1}</span><p>${x}</p></div>`).join("")}</div>
+<div class="st" style="grid-template-columns:1fr 1fr"><div class="s1">${k.tot}<b>${n}</b></div><div class="s0">${k.res}<b>${r}</b></div></div>`}
+function vote(id){if(S.voted.includes(id))return;const t=S.tickets.find(x=>x.id===id);if(t){t.v=(t.v||0)+1;S.voted.push(id);save();render()}}
+function comm(k){const ts=[...S.tickets].sort((a,b)=>(b.v||0)-(a.v||0)||b.at-a.at);
+return`<div class="card"><h2>${k.cn}</h2><p class="mute">${k.ch}</p></div>`+(ts.length?ts.map(t=>`<div class="card t c${t.sev}"><div class="row">${chip(k,t.sev)}<b>${N[lang][t.cat]}</b><span class="mute">${stL(k,t.st)}</span></div><p>${esc(t.text)}</p>${t.loc?`<p class="mute">📍 ${esc(t.loc)}</p>`:""}<button onclick="vote('${t.id}')" ${S.voted.includes(t.id)?"disabled":""}>👍 ${k.me2} (${t.v||0})</button></div>`).join(""):`<p class="card">${k.none}</p>`)}
+function mineV(k){const mine=S.tickets.filter(t=>S.mine.includes(t.id)).reverse();return`<h2>${k.mine}</h2>`+(mine.length?mine.map(t=>card(t,k,false)).join(""):`<p class="card mute">${k.mn}</p>`)}
+function guest(k){const i=mode==="in";
+return""+
+`<div class="card"><h2>${i?k.login:k.signup}</h2><div class="g"><input id="em" type="email" placeholder="${k.email}" autocomplete="email">${i?"":`<select id="dp">${CK.map((c,j)=>`<option value="${c}">${N[lang][j]}${SUF[lang]}</option>`).join("")}</select>`}<input id="pw" type="password" placeholder="${k.pw}" autocomplete="${i?"current-password":"new-password"}"></div><p class="row"><button class="pri" onclick="${i?"login":"signup"}()">${i?k.login:k.signup}</button><button onclick="mode='${i?"up":"in"}';render()">${i?k.newacc:k.haveacc}</button></p><p class="mute">${k.ahint}</p></div>`}
+async function setPw(w){const k=K[lang],v=$("#np_"+w).value;if(v.length<6)return toast(k.short);S.pw[w]=await H(v);save();$("#np_"+w).value="";toast(k.saved)}
+function pwRow(k,w,label){return`<div class="row" style="margin-bottom:8px"><span style="min-width:150px">${label} ${S.pw[w]?"✅":"⚪"}</span><input id="np_${w}" type="password" placeholder="${k.setnow}" style="flex:1;min-width:140px" autocomplete="new-password"><button onclick="setPw('${w}')">${k.save}</button></div>`}
+function render(){const k=K[lang];$("#tag").textContent=k.tag;$("#lg").value=lang;
+$("#nav").innerHTML=[["home",k.home],["report",k.report],["track",k.track],["dash",k.dash],["comm",k.comm],["auth",k.auth]].map(([i,l])=>`<button class="${tab===i?"on":""}" onclick="tab='${i}';render()">${l}</button>`).join("");let h="";
+if(tab==="home"){h=home(k)}else if(tab==="report"){h=R?`<div class="card"><p class="mute">${k.id}</p><div class="id">${R.id}</div></div>${card(R,k,false)}<div class="row"><button onclick="say('${R.id.split("").join(" ")}')">🔊 ${k.listen}</button><button class="pri" onclick="R=null;render()">${k.another}</button></div>`
+:`<div class="card"><h2>${k.report}</h2><textarea id="tx" placeholder="${k.describe}" oninput="D.text=this.value">${esc(D.text)}</textarea>
+<div class="row" style="margin:10px 0"><button id="mic" class="mic${rec?" on":""}" onclick="mic()" aria-label="Voice">🎤</button><span class="mute">${k.describe}</span></div>
+<div class="g"><input placeholder="${k.name}" value="${esc(D.name)}" oninput="D.name=this.value"><input placeholder="${k.loc}" value="${esc(D.loc)}" oninput="D.loc=this.value"></div>
+<p class="mute" style="margin:12px 0 4px">${k.photo}</p><input id="ph" type="file" accept="image/*"><p><button class="pri" onclick="submit()">${k.submit}</button></p></div>`}
+else if(tab==="track"){const q=($("#q")||{}).value;h=`<div class="card"><h2>${k.track}</h2><div class="row"><input id="q" placeholder="${k.enterId}" style="flex:1" value="${esc(window.Q||"")}"><button class="pri" onclick="window.Q=$('#q').value.trim().toUpperCase();render()">${k.find}</button></div></div>`;
+if(window.Q){const t=S.tickets.find(x=>x.id===window.Q);h+=t?card(t,k,false):`<p class="card">${k.nf}</p>`}}
+else if(tab==="comm"){h=comm(k)}else if(tab==="dash"){h=mineV(k)}else if(!U){h=guest(k)}
+else{const ts=S.tickets.filter(t=>U==="admin"?(F==="all"||CK[t.cat]===F):CK[t.cat]===U).sort((a,b)=>b.sev-a.sev||a.at-b.at),c=[0,1,2,3].map(i=>ts.filter(t=>t.sev===i&&t.st<2).length);
+h=`<div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">${U==="admin"?k.admin:N[lang][CK.indexOf(U)]+SUF[lang]}</h2><button onclick="U=null;UE=null;render()">${k.logout}</button></div><p class="mute">${esc(UE||"")}</p>
+<div class="st">${[3,2,1,0].map(i=>`<div class="s${i}">${sevL(k,i)}<b>${c[i]}</b></div>`).join("")}</div>
+${U==="admin"?`<div class="card"><h2>${k.auth}</h2>${Object.keys(S.acc).filter(e=>S.acc[e].d!=="admin").map(e=>`<div class="row" style="margin-bottom:6px"><span style="flex:1">${esc(e)} · ${N[lang][CK.indexOf(S.acc[e].d)]}</span><button onclick="delAcc(${Object.keys(S.acc).indexOf(e)})">✕</button></div>`).join("")||"—"}</div><select style="margin-bottom:12px" onchange="F=this.value;render()"><option value="all">${k.all}</option>${CK.map((x,i)=>`<option value="${x}"${F===x?" selected":""}>${N[lang][i]}</option>`).join("")}</select>`:``}
+<div class="card"><div class="row"><input id="np_me" type="password" placeholder="${k.mypw}" style="flex:1" autocomplete="new-password"><button onclick="chPw()">${k.cpw}</button></div></div>${ts.length?ts.map(t=>card(t,k,true)).join(""):`<p class="card">${k.none}</p>`}`}
+const sv={x:window.scrollY};$("#app").innerHTML=h}
+render();
+</script></body></html>
